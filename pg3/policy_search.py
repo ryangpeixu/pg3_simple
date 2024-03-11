@@ -55,6 +55,49 @@ def learn_policy(domain_str: str,
                              initial_policy_strs)
     return str(ldl)
 
+def score_policy(domain_str: str,
+                 problem_strs: List[str],
+                 horizon: int,
+                 demos: Optional[List[List[str]]] = None,
+                 max_rule_params: int = 8,
+                 heuristic_name: str = "policy_guided",
+                 search_method: str = "hill_climbing",
+                 task_planning_heuristic: str = "lmcut",
+                 max_policy_guided_rollout: int = 50,
+                 gbfs_max_expansions: int = 100,
+                 hc_enforced_depth: int = 0,
+                 allow_new_vars: bool = True,
+                 initial_policy_strs: Optional[List[str]] = None) -> str:
+    """Outputs a string representation of a lifted decision list."""
+    types, predicates, operators = utils.parse_pddl_domain(domain_str)
+    train_tasks = [
+        utils.pddl_problem_str_to_task(problem_str, domain_str, types,
+                                       predicates)
+        for problem_str in problem_strs
+    ]
+    if demos is not None:
+        assert len(demos) == len(problem_strs), "Supply one demo per problem."
+        assert heuristic_name == "demo_plan_comparison", \
+            ("Only supply demos if using demo_plan_comparison heuristic, and "
+             "even then, the demos are optional.")
+        user_supplied_demos = dict(zip(train_tasks, demos))
+    else:
+        user_supplied_demos = None
+    
+    trajectory_generator = _create_trajectory_generator(
+        heuristic_name, predicates, operators, task_planning_heuristic,
+        max_policy_guided_rollout, user_supplied_demos)
+    heuristic = _create_heuristic(heuristic_name, trajectory_generator, train_tasks, horizon)
+    initial_states = []
+    if initial_policy_strs is None:
+        initial_states = [LiftedDecisionList([])]
+    else:
+        initial_states = [
+            utils.parse_ldl_from_str(l, types, predicates, operators)
+            for l in initial_policy_strs
+        ]
+    policy_scores = [heuristic(policy) for policy in initial_states]
+    return policy_scores
 
 def _run_policy_search(
         types: Set[Type],
