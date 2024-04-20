@@ -121,6 +121,9 @@ class _AddConditionPG3SearchOperator(_PG3SearchOperator):
                 condition_vars |= frozenset(new_vars)
             for condition in utils.get_all_lifted_atoms_for_predicate(
                     pred, condition_vars):
+                unique_vars = set([v.name for v in condition.variables])
+                if len(unique_vars) != len(condition.variables):
+                    continue
                 conditions.append(condition)
         return conditions
 
