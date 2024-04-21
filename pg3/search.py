@@ -201,6 +201,7 @@ def run_hill_climbing(
         best_child_node = None
         current_depth_nodes = [cur_node]
         all_best_heuristics = []
+        early_break = False
         for depth in range(0, enforced_depth + 1):
             logging.info(f"Searching for an improvement at depth {depth}")
             # This is a list to ensure determinism. Note that duplicates are
@@ -225,6 +226,12 @@ def run_hill_climbing(
                     if child_heuristic < best_heuristic:
                         best_heuristic = child_heuristic
                         best_child_node = child_node
+                    print(child_node, "SCORE", child_heuristic)
+                    if early_termination_heuristic_thresh is not None \
+                        and best_heuristic <= early_termination_heuristic_thresh:
+                        early_break = True
+                        break
+
             if parallelize:
                 # Parallelize the expensive part (heuristic computation).
                 num_cpus = mp.cpu_count()
@@ -255,6 +262,8 @@ def run_hill_climbing(
         last_heuristic = best_heuristic
         logging.info(f"\nHill climbing reached new state {cur_node.state} "
                      f"with heuristic {last_heuristic}")
+        if early_break:
+            break
     states, actions = _finish_plan(cur_node)
     assert len(states) == len(heuristics)
     return states, actions, heuristics
