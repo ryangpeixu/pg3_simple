@@ -150,6 +150,70 @@ def run_astar(initial_states: Sequence[_S],
                                  get_priority, max_expansions, max_evals,
                                  timeout, lazy_expansion)
 
+def run_policy_hill_climb(
+        initial_states: Sequence[_S],
+        get_successors: Callable[[_S], Iterator[Tuple[_A, _S, float]]],
+        heuristic: Callable[[_S], float],
+        early_termination_heuristic_thresh: Optional[float] = None) -> Tuple[List[_S], List[_A], List[float]]:
+    """Greedy hill climbing local search."""
+    # Start with the best initial state.
+    cur_node: Optional[_HeuristicSearchNode[_S, _A]] = None
+    visited = set()
+    best_heuristic = float("inf")
+    for initial_state in initial_states:
+        root_node: _HeuristicSearchNode[_S, _A] = _HeuristicSearchNode(
+            initial_state, 0, 0)
+        root_heuristic = heuristic(initial_state)
+        if cur_node is None or root_heuristic < best_heuristic:
+            cur_node = root_node
+            best_heuristic = root_heuristic
+        visited.add(initial_state)
+    last_heuristic = best_heuristic
+    heuristics = [last_heuristic]
+    assert cur_node is not None
+    logging.info(f"\n\nStarting hill climbing at state {cur_node.state} "
+                 f"with heuristic {last_heuristic}")
+    while True:
+        # Stops when heuristic reaches specified value.
+        if early_termination_heuristic_thresh is not None \
+            and last_heuristic <= early_termination_heuristic_thresh:
+            break
+        
+        for action, child_state, cost in get_successors(cur_node.state):
+            if child_state in visited:
+                continue
+            visited.add(child_state)
+            child_path_cost = cur_node.cumulative_cost + cost
+            child_node = _HeuristicSearchNode(
+                state=child_state,
+                edge_cost=cost,
+                cumulative_cost=child_path_cost,
+                parent=cur_node,
+                action=action)
+            child_heuristic = heuristic(child_node.state)
+            logging.info(f"\nTrying state {cur_node.state} "
+                            f"with heuristic {child_heuristic}")
+            if child_heuristic < best_heuristic:
+                best_heuristic = child_heuristic
+                best_child_node = child_node
+                break # This makes it really greedy
+
+        if best_child_node is None:
+            logging.info("\nTerminating hill climbing, no more successors")
+            break
+        if last_heuristic <= best_heuristic:
+            logging.info(
+                "\nTerminating hill climbing, could not improve score")
+            break
+        heuristics.append(best_heuristic)
+        cur_node = best_child_node
+        last_heuristic = best_heuristic
+        logging.info(f"\nHill climbing reached new state {cur_node.state} "
+                     f"with heuristic {last_heuristic}")
+
+    states, actions = _finish_plan(cur_node)
+    assert len(states) == len(heuristics)
+    return states, actions, heuristics
 
 def run_hill_climbing(
         initial_states: Sequence[_S],

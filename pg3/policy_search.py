@@ -9,8 +9,9 @@ from pg3 import utils
 from pg3.heuristics import _PG3Heuristic, _PlanComparisonPG3Heuristic, \
     _PolicyEvaluationPG3Heuristic
 from pg3.operators import _AddConditionPG3SearchOperator, \
-    _AddRulePG3SearchOperator, _PG3SearchOperator
-from pg3.search import run_gbfs, run_hill_climbing
+    _AddRulePG3SearchOperator, _PG3SearchOperator, \
+    _DeleteConditionPG3SearchOperator, _DeleteRulePG3SearchOperator
+from pg3.search import run_gbfs, run_hill_climbing, run_policy_hill_climb
 from pg3.structs import LiftedDecisionList, Predicate, STRIPSOperator, Task, \
     Type
 from pg3.trajectory_gen import _PolicyGuidedPlanningTrajectoryGenerator, \
@@ -165,12 +166,10 @@ def _run_policy_search(
 
     elif search_method == "hill_climbing":
         # Terminate when no improvement is found.
-        path, _, _ = run_hill_climbing(initial_states=initial_states,
-                                       check_goal=lambda _: False,
+        path, _, _ = run_policy_hill_climb(initial_states=initial_states,
                                        get_successors=get_successors,
                                        heuristic=heuristic,
-                                       early_termination_heuristic_thresh=0,
-                                       enforced_depth=hc_enforced_depth)
+                                       early_termination_heuristic_thresh=0)
 
     else:
         raise NotImplementedError("Unrecognized search_method "
@@ -186,6 +185,8 @@ def _create_search_operators(
         operators: Set[STRIPSOperator],
         allow_new_vars: bool = True) -> List[_PG3SearchOperator]:
     search_operator_classes = [
+        _DeleteConditionPG3SearchOperator,
+        _DeleteRulePG3SearchOperator,
         _AddRulePG3SearchOperator,
         _AddConditionPG3SearchOperator,
     ]
