@@ -178,6 +178,7 @@ def run_policy_hill_climb(
         if early_termination_heuristic_thresh is not None \
             and last_heuristic <= early_termination_heuristic_thresh:
             break
+        best_child_node = None
         
         for action, child_state, cost in get_successors(cur_node.state):
             if child_state in visited:
