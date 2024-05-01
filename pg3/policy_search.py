@@ -23,7 +23,7 @@ def learn_policy(domain_str: str,
                  problem_strs: List[str],
                  horizon: int,
                  demos: Optional[List[List[str]]] = None,
-                 max_rule_params: int = 8,
+                 max_rule_params: int = 50,
                  heuristic_name: str = "policy_guided",
                  search_method: str = "hill_climbing",
                  task_planning_heuristic: str = "lmcut",
@@ -185,8 +185,6 @@ def _create_search_operators(
         operators: Set[STRIPSOperator],
         allow_new_vars: bool = True) -> List[_PG3SearchOperator]:
     search_operator_classes = [
-        _DeleteConditionPG3SearchOperator,
-        _DeleteRulePG3SearchOperator,
         _AddRulePG3SearchOperator,
         _AddConditionPG3SearchOperator,
     ]
