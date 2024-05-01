@@ -13,6 +13,7 @@ from pg3.trajectory_gen import _TrajectoryGenerator
 
 class _PG3Heuristic(abc.ABC):
     """Given an LDL policy, produce a score, with lower better."""
+    _num_calls = 0
 
     def __init__(
         self,
@@ -26,6 +27,7 @@ class _PG3Heuristic(abc.ABC):
 
     def __call__(self, ldl: LiftedDecisionList) -> float:
         """Compute the heuristic value for the given LDL policy."""
+        _PG3Heuristic._num_calls += 1
         score = 0.0
         for task in self._train_tasks:
             score += self._get_score_for_task(ldl, task)

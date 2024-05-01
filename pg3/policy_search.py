@@ -54,7 +54,7 @@ def learn_policy(domain_str: str,
                              max_policy_guided_rollout, gbfs_max_expansions,
                              hc_enforced_depth, allow_new_vars,
                              initial_policy_strs)
-    return str(ldl)
+    return str(ldl), _PG3Heuristic()._num_calls
 
 def score_policy(domain_str: str,
                  problem_strs: List[str],
