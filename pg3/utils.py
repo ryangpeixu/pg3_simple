@@ -52,10 +52,7 @@ def all_ground_ldl_rules(
                                         frozenset(atoms), frozenset(goal_atoms))
 
 @functools.lru_cache(maxsize=None)
-def special_all_ground_rules(
-        rule: LDLRule, objects: FrozenSet[Object],
-        all_predicates: FrozenSet[Predicate],
-        atoms: FrozenSet[GroundAtom], goal_atoms: FrozenSet[GroundAtom], max_assignments = 1) -> List[_GroundLDLRule]:
+def special_all_ground_rules(rule: LDLRule, objects: FrozenSet[Object], atoms: FrozenSet[GroundAtom], goal_atoms: FrozenSet[GroundAtom], max_assignments = 1) -> List[_GroundLDLRule]:
     """Helper for all_ground_ldl_rules() that caches the outputs."""
     """
     CHANGES:
@@ -63,15 +60,12 @@ def special_all_ground_rules(
         - Returns at most 4 ground rules (instead of all)
     
     """
-    start_time = time.time()
     ground_rules = []
     # Input: rule.parameters(), param_choices, atoms, goal_atoms, rule.pos_state_preconditions, rule.neg_state_preconditions, rule.goal_preconditions
     # Goal: Find an assignment of parameters to objects that are satisfied by the atoms and goal_atoms using a search
 
     # Transform predicates to pddlgym predicates
     predicators_to_pddlgym_predicates = {}
-    for predicate in all_predicates:
-        predicators_to_pddlgym_predicates[predicate] = pddlgym.structs.Predicate(predicate.name, len(predicate.types), [pddlgym.structs.Type("object") for _ in range(len(predicate.types))], False, False)
     for atom in atoms:
         if atom.predicate not in predicators_to_pddlgym_predicates:
             predicators_to_pddlgym_predicates[atom.predicate] = pddlgym.structs.Predicate(atom.predicate.name, len(atom.predicate.types), [pddlgym.structs.Type("object") for _ in range(len(atom.predicate.types))], False, False) 
@@ -97,6 +91,12 @@ def special_all_ground_rules(
             if var not in variables_to_pddlgym_typedentities:
                 variables_to_pddlgym_typedentities[var] = pddlgym.structs.TypedEntity(var.name, pddlgym.structs.Type(var.type.name))
                 variable_name_to_variable[str(var)] = var
+    for condition in rule.neg_state_preconditions:
+        for var in condition.variables:
+            if var not in variables_to_pddlgym_typedentities:
+                variables_to_pddlgym_typedentities[var] = pddlgym.structs.TypedEntity(var.name, pddlgym.structs.Type(var.type.name))
+                variable_name_to_variable[str(var)] = var
+
     for condition in rule.goal_preconditions:
         for var in condition.variables:
             if var not in variables_to_pddlgym_typedentities:
@@ -293,17 +293,12 @@ def get_all_valid_actions(
     init_atoms: Optional[Collection[GroundAtom]] = None
 ) -> Iterator[_GroundSTRIPSOperator]:
     """Get all valid actions for an LRL rule in the given state."""
-    for ground_rule in all_ground_ldl_rules(
+    for ground_rule in special_all_ground_rules(
             rule,
-            atoms,
-            objects,
-            static_predicates=static_predicates,
-            init_atoms=init_atoms,
-            goal_atoms = goal):
-        if ground_rule.pos_state_preconditions.issubset(atoms) and \
-            not ground_rule.neg_state_preconditions & atoms and \
-            ground_rule.goal_preconditions.issubset(goal):
-            yield ground_rule.ground_operator
+            frozenset(objects),
+            frozenset(atoms),
+            goal_atoms = frozenset(goal)):
+        yield ground_rule.ground_operator
 
 
 def query_ldl(
