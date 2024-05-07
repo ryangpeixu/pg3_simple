@@ -589,7 +589,7 @@ class _PyperplanHeuristicWrapper(_TaskPlanningHeuristic):
                               self._pyperplan_heuristic)
 
     @staticmethod
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache(maxsize=1000)
     def _evaluate(pyperplan_facts: _PyperplanFacts,
                   pyperplan_goal: _PyperplanFacts,
                   pyperplan_heuristic: _PyperplanBaseHeuristic) -> float:
