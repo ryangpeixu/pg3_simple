@@ -192,7 +192,7 @@ def run_policy_hill_climb(
                 parent=cur_node,
                 action=action)
             child_heuristic = heuristic(child_node.state)
-            logging.info(f"\nTrying state {cur_node.state} "
+            logging.info(f"\nTrying state {child_node.state} "
                             f"with heuristic {child_heuristic}")
             if child_heuristic < best_heuristic:
                 best_heuristic = child_heuristic
