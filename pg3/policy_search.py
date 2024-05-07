@@ -54,7 +54,7 @@ def learn_policy(domain_str: str,
                              max_policy_guided_rollout, gbfs_max_expansions,
                              hc_enforced_depth, allow_new_vars,
                              initial_policy_strs)
-    return str(ldl), _PG3Heuristic()._num_calls
+    return str(ldl), _PG3Heuristic._num_calls
 
 def score_policy(domain_str: str,
                  problem_strs: List[str],
@@ -185,6 +185,8 @@ def _create_search_operators(
         operators: Set[STRIPSOperator],
         allow_new_vars: bool = True) -> List[_PG3SearchOperator]:
     search_operator_classes = [
+        #_DeleteConditionPG3SearchOperator,
+        #_DeleteRulePG3SearchOperator,
         _AddRulePG3SearchOperator,
         _AddConditionPG3SearchOperator,
     ]
